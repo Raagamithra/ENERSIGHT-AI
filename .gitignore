@@ -1,0 +1,32 @@
+﻿node_modules/
+.venv/
+.venv312/
+__pycache__/
+*.pyc
+dist/
+build/
+.env
+.env.*
+!.env.example
+.git/
+
+# Python cache and local environments
+.venv*/
+__pycache__/
+*.py[cod]
+
+# Frontend build output and dependencies
+node_modules/
+dist/
+build/
+
+# Local secrets
+.env
+.env.*
+!.env.example
+
+# Local editor and tool settings
+.kilo/
+
+# Nested duplicate project copy
+/Enersight-AI/
