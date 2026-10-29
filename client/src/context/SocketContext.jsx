@@ -1,13 +1,23 @@
+
 import { createContext, useContext, useEffect, useState } from 'react';
 import { io } from 'socket.io-client';
 import { useAuth } from './AuthContext';
 
 const SocketContext = createContext(null);
-const apiBase = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
-const socketUrl = import.meta.env.VITE_SOCKET_URL || apiBase.replace(/\/api\/?$/, '');
+
+// Deployed Render backend API URL
+const apiBase =
+  import.meta.env.VITE_API_URL ||
+  'https://enersight-ai-server.onrender.com/api';
+
+// Socket.IO connects to the backend root, not the /api path
+const socketUrl =
+  import.meta.env.VITE_SOCKET_URL ||
+  apiBase.replace(/\/api\/?$/, '');
 
 export function SocketProvider({ children }) {
   const { user } = useAuth();
+
   const [connectionState, setConnectionState] = useState('offline');
   const [energyUpdate, setEnergyUpdate] = useState(null);
   const [meterStatuses, setMeterStatuses] = useState({});
@@ -25,6 +35,7 @@ export function SocketProvider({ children }) {
     }
 
     const token = localStorage.getItem('enerSightToken');
+
     const socket = io(socketUrl, {
       auth: { token },
       reconnection: true,
@@ -37,14 +48,28 @@ export function SocketProvider({ children }) {
     const onConnect = () => setConnectionState('live');
     const onDisconnect = () => setConnectionState('reconnecting');
     const onConnectError = () => setConnectionState('reconnecting');
+
     const onEnergyUpdate = (update) => setEnergyUpdate(update);
-    const onMeterStatus = (update) => setMeterStatuses((current) => ({ ...current, [update.meterId]: update }));
+
+    const onMeterStatus = (update) =>
+      setMeterStatuses((current) => ({
+        ...current,
+        [update.meterId]: update,
+      }));
+
     const onFacilityUpdate = (update) => setFacilityUpdates(update);
     const onMeterUpdate = (update) => setMeterUpdates(update);
-    const onAnomaly = (anomaly) => setAnomalies((current) => [anomaly, ...current].slice(0, 100));
-    const onAlert = (alert) => setAlerts((current) => [alert, ...current].slice(0, 100));
+
+    const onAnomaly = (anomaly) =>
+      setAnomalies((current) => [anomaly, ...current].slice(0, 100));
+
+    const onAlert = (alert) =>
+      setAlerts((current) => [alert, ...current].slice(0, 100));
+
     const onAiUpdate = (update) => setAiUpdate(update);
-    const onDemandResponseUpdate = (update) => setDemandResponseResult(update);
+
+    const onDemandResponseUpdate = (update) =>
+      setDemandResponseResult(update);
 
     socket.on('connect', onConnect);
     socket.on('disconnect', onDisconnect);
@@ -70,12 +95,25 @@ export function SocketProvider({ children }) {
       socket.off('alertCreated', onAlert);
       socket.off('aiUpdate', onAiUpdate);
       socket.off('demandResponseUpdate', onDemandResponseUpdate);
+
       socket.disconnect();
     };
   }, [user]);
 
   return (
-    <SocketContext.Provider value={{ connectionState, energyUpdate, meterStatuses, facilityUpdates, meterUpdates, anomalies, alerts, aiUpdate, demandResponseResult }}>
+    <SocketContext.Provider
+      value={{
+        connectionState,
+        energyUpdate,
+        meterStatuses,
+        facilityUpdates,
+        meterUpdates,
+        anomalies,
+        alerts,
+        aiUpdate,
+        demandResponseResult,
+      }}
+    >
       {children}
     </SocketContext.Provider>
   );
@@ -83,6 +121,10 @@ export function SocketProvider({ children }) {
 
 export const useSocket = () => {
   const context = useContext(SocketContext);
-  if (!context) throw new Error('useSocket must be used within SocketProvider');
+
+  if (!context) {
+    throw new Error('useSocket must be used within SocketProvider');
+  }
+
   return context;
 };
